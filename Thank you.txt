@@ -1,0 +1,1 @@
+Thank you to everyone who contributes towards the eggs repo. This repo should always be compatible with pterodactyl 1.0. We will do our best to ensure the compatibility across both panels and wings for both pterodactyl.io and sneakypanel.com
