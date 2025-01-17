@@ -1,5 +1,5 @@
 # eggs
-Official repo for sneakypanel.com eggs
+Official repo for sneakyhub.com eggs
 
 Name the egg.
 Explain what it does.
