@@ -11,3 +11,7 @@ Thank you for taking interest in our project!
 
 - PaperMc
 - Canvas
+
+## SteamCMD
+
+- Palworld
