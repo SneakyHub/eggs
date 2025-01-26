@@ -1,0 +1,56 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2025-01-26T15:19:44+00:00",
+    "name": "Minecraft - EaglerXBungee",
+    "author": "sneaky@sneakyhub.com",
+    "description": "EaglerXBungee!!!",
+    "features": [
+        "eula",
+        "java_version",
+        "pid_limit"
+    ],
+    "docker_images": {
+        "Java 23": "ghcr.io\/sneakyhub\/yolks:java_23"
+    },
+    "file_denylist": [],
+    "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:MaxGCPauseMillis=100 -XX:+DisableExplicitGC -XX:TargetSurvivorRatio=90 -XX:G1NewSizePercent=50 -XX:G1MaxNewSizePercent=80 -XX:G1MixedGCLiveThresholdPercent=35 -XX:+ParallelRefProcEnabled -Dusing.aikars.flags=mcflags.emc.gs -Deaglerxbungee.stfu=true -jar {{SERVER_JARFILE}}",
+    "config": {
+        "files": "{\r\n    \"server.properties\": {\r\n        \"parser\": \"properties\",\r\n        \"find\": {\r\n            \"server-ip\": \"0.0.0.0\",\r\n            \"view-distance\": \"6\",\r\n            \"motd\": \"Hosted by SneakyHub.com\",\r\n            \"server-port\": \"{{server.build.default.port}}\",\r\n            \"query.port\": \"{{server.build.default.port}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{}",
+        "logs": "{}",
+        "stop": "stop"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/ash\r\n# EaglerXBungee Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\nPROJECT=EaglerXBungee\r\n\r\n# URLs for required downloads\r\nSERVER_DOWNLOAD_URL=\"https:\/\/ci.md-5.net\/job\/BungeeCord\/1892\/artifact\/bootstrap\/target\/BungeeCord.jar\"\r\nPLUGIN_DOWNLOAD_URL=\"https:\/\/deev.is\/eagler\/EaglerXBungee-1.3.5.jar\"\r\n\r\n# Server files directory\r\ncd \/mnt\/server\r\n\r\n# Download the server JAR\r\necho -e \"Downloading server JAR from ${SERVER_DOWNLOAD_URL}\"\r\n\r\n# If the server jar already exists, move it to an old file\r\nif [ -f ${SERVER_JARFILE} ]; then\r\n    mv ${SERVER_JARFILE} ${SERVER_JARFILE}.old\r\nfi\r\n\r\n# Download the latest JAR with proper options\r\ncurl -L -C - -o ${SERVER_JARFILE} ${SERVER_DOWNLOAD_URL}\r\n\r\n# Check if the download is successful and file size is valid\r\nif [ ! -f ${SERVER_JARFILE} ] || [ $(stat -c %s ${SERVER_JARFILE}) -lt 1000 ]; then\r\n    echo \"Download failed or file is too small. Please check the URL or server response.\"\r\n    exit 1\r\nfi\r\n\r\n# Ensure plugins directory exists\r\nif [ ! -d plugins ]; then\r\n    echo \"Creating plugins directory...\"\r\n    mkdir -p plugins\r\nfi\r\n\r\n# Download the plugin\r\necho -e \"Downloading plugin from ${PLUGIN_DOWNLOAD_URL}\"\r\nPLUGIN_NAME=$(basename ${PLUGIN_DOWNLOAD_URL}) # Extract the file name from the URL\r\ncurl -L -o plugins\/${PLUGIN_NAME} ${PLUGIN_DOWNLOAD_URL}\r\n\r\n# Check if the plugin download was successful\r\nif [ ! -f plugins\/${PLUGIN_NAME} ] || [ $(stat -c %s plugins\/${PLUGIN_NAME}) -lt 1000 ]; then\r\n    echo \"Plugin download failed or file is too small. Please check the URL or server response.\"\r\n    exit 1\r\nfi\r\n\r\necho -e \"Plugin ${PLUGIN_NAME} downloaded successfully to plugins\/ directory.\"\r\n\r\n# Download default server.properties if it doesn't exist\r\nif [ ! -f server.properties ]; then\r\n    echo -e \"Downloading MC server.properties\"\r\n    curl -o server.properties https:\/\/sneakyhub.com\/files\/server.properties\r\nfi\r\n\r\necho \"Installation complete.\"",
+            "container": "ghcr.io\/sneakyhub\/installers:alpine",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Server Jar File",
+            "description": "The name of the server jarfile to run the server with.",
+            "env_variable": "SERVER_JARFILE",
+            "default_value": "server.jar",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|regex:\/^([\\w\\d._-]+)(\\.jar)$\/",
+            "field_type": "text"
+        },
+        {
+            "name": "Download Path",
+            "description": "A URL to use to download a server.jar rather than the ones in the install script. This is not user viewable.",
+            "env_variable": "DL_PATH",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|string",
+            "field_type": "text"
+        }
+    ]
+}
