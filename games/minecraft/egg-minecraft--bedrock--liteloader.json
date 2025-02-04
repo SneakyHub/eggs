@@ -1,0 +1,112 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2025-02-04T14:09:53+00:00",
+    "name": "Minecraft - Bedrock (Liteloader)",
+    "author": "sneaky@sneakyhub.com",
+    "description": "LiteLoaderBDS - Epoch-making & Cross-language Bedrock Dedicated Servers Plugin Loader\r\n\r\nLiteLoaderBDS is an unofficial plugin loader that provides basic API support for Bedrock Dedicated Server, with a massive API, lots of packed utility interfaces, a rich event system and powerful basic interface support.",
+    "features": null,
+    "docker_images": {
+        "ghcr.io\/sneakyhub\/yolks:wine_staging": "ghcr.io\/sneakyhub\/yolks:wine_staging"
+    },
+    "file_denylist": [],
+    "startup": ".\/lae-ll-launcher bedrock_server_mod.exe",
+    "config": {
+        "files": "{\r\n    \"server.properties\": {\r\n        \"parser\": \"properties\",\r\n        \"find\": {\r\n            \"server-port\": \"{{server.build.default.port}}\",\r\n            \"server-name\": \"{{server.build.env.SERVERNAME}}\",\r\n            \"gamemode\": \"{{server.build.env.GAMEMODE}}\",\r\n            \"difficulty\": \"{{server.build.env.DIFFICULTY}}\",\r\n            \"max-players\": \"{{server.build.env.MAXPLAYERS}}\",\r\n            \"level-name\": \"{{server.build.env.WORLDNAME}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"IPv4 supported\"\r\n}",
+        "logs": "{}",
+        "stop": "stop"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# LiteLoader First-time Install Script\r\n\r\n# Update and install required dependencies\r\napk update && apk add --no-cache gzip jq curl wine unzip wget\r\n\r\n# Navigate to server directory\r\ncd \/mnt\/server || exit 1\r\n\r\n# Clean up old files, preserving necessary ones\r\nfind . -mindepth 1 -maxdepth 1 ! -name \"allowlist.json\" ! -name \"permissions.json\" ! -name \"server.properties\" ! -name \"plugins\" ! -name \"world\" -exec rm -rf {} +\r\n\r\n# Generate a random Chrome version for requests\r\nRANDVERSION=$((1 + RANDOM % 4000))\r\n\r\n# Determine BDS version and fetch download URL\r\nif [[ -z \"${BDS_VERSION}\" || \"${BDS_VERSION}\" == \"latest\" ]]; then\r\n    echo -e \"\\nDownloading latest Bedrock server...\"\r\n    curl -sSL -A \"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/90.0.${RANDVERSION}.212 Safari\/537.36\" \\\r\n        -H \"Accept-Language: en\" -H \"Accept-Encoding: gzip, deflate\" -o versions.html.gz \\\r\n        \"https:\/\/www.minecraft.net\/en-us\/download\/server\/bedrock\"\r\n    DOWNLOAD_URL=$(zgrep -o 'https:\/\/minecraft.azureedge.net\/bin-win\/[^\"]*' versions.html.gz)\r\nelse \r\n    echo -e \"\\nDownloading Bedrock server version ${BDS_VERSION}...\"\r\n    DOWNLOAD_URL=\"https:\/\/minecraft.azureedge.net\/bin-win\/bedrock-server-${BDS_VERSION}.zip\"\r\nfi\r\n\r\n# Extract the filename from the URL\r\nDOWNLOAD_FILE=\"${DOWNLOAD_URL##*\/}\"\r\n\r\necho -e \"Downloading files from: $DOWNLOAD_URL\"\r\ncurl -sSL -A \"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/90.0.${RANDVERSION}.212 Safari\/537.36\" \\\r\n    -H \"Accept-Language: en\" -o \"${DOWNLOAD_FILE}\" \"${DOWNLOAD_URL}\"\r\n\r\n# Unzip and remove the archive\r\necho -e \"Unpacking server files...\"\r\nunzip -o \"${DOWNLOAD_FILE}\" && rm -f \"${DOWNLOAD_FILE}\" versions.html.gz\r\n\r\n# Fetch LiteLoaderBDS latest release\r\necho -e \"\\nFetching LiteLoaderBDS release information...\"\r\nLATEST_JSON=$(curl -sSL \"https:\/\/api.github.com\/repos\/LiteLDev\/LiteLoaderBDS\/releases\/latest\")\r\nRELEASES=$(curl -sSL \"https:\/\/api.github.com\/repos\/LiteLDev\/LiteLoaderBDS\/releases\")\r\n\r\nif [[ -z \"${LL_VERSION}\" || \"${LL_VERSION}\" == \"latest\" ]]; then\r\n    echo -e \"\\nDownloading latest LiteLoaderBDS...\"\r\n    DOWNLOAD_GIT_URL=$(jq -r '.assets[0].browser_download_url' <<< \"${LATEST_JSON}\")\r\nelse\r\n    VERSION_CHECK=$(jq -r --arg VERSION \"${LL_VERSION}\" '.[] | select(.tag_name==$VERSION) | .tag_name' <<< \"${RELEASES}\")\r\n    if [[ \"${LL_VERSION}\" == \"${VERSION_CHECK}\" ]]; then\r\n        echo -e \"\\nDownloading LiteLoaderBDS version ${LL_VERSION}...\"\r\n        DOWNLOAD_GIT_URL=$(jq -r --arg VERSION \"${LL_VERSION}\" '.[] | select(.tag_name==$VERSION) | .assets[0].browser_download_url' <<< \"${RELEASES}\")\r\n    else\r\n        echo -e \"Version not found, defaulting to latest release...\"\r\n        DOWNLOAD_GIT_URL=$(jq -r '.assets[0].browser_download_url' <<< \"${LATEST_JSON}\")\r\n    fi\r\nfi\r\n\r\n# Download and extract LiteLoaderBDS\r\necho -e \"Downloading LiteLoaderBDS from: ${DOWNLOAD_GIT_URL}\"\r\ncurl -sSL -o LiteLoader.zip \"${DOWNLOAD_GIT_URL}\"\r\nunzip -o LiteLoader.zip && rm -f LiteLoader.zip\r\n\r\n# Move LiteLoader files to server directory\r\nmv -f LiteLoaderBDS\/* \/mnt\/server\r\nrm -rf LiteLoaderBDS\r\n\r\n# Run PeEditor.exe with a timeout (30s) and clean up Wine cache\r\ntimeout 30s wine PeEditor.exe\r\nrm -rf \/root\/.wine\r\n\r\n# Download LiteLoader launcher and make it executable\r\necho -e \"\\nDownloading LiteLoader launcher...\"\r\nwget -q -O lae-ll-launcher \"https:\/\/io.ivampiresp.com\/d\/Software\/MCServer\/BDS\/LiteLoader\/lae-ll-launcher\"\r\nchmod +x lae-ll-launcher\r\n\r\necho \"LiteLoader installation complete!\"",
+            "container": "ghcr.io\/sneakyhub\/installers:alpine",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Bedrock Dedicated Server Version",
+            "description": "Insert BDS Version",
+            "env_variable": "BDS_VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Liteloader Version",
+            "description": "Insert Liteloader Version from Github Releases",
+            "env_variable": "LL_VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Wine",
+            "description": "",
+            "env_variable": "WINEDEBUG",
+            "default_value": "-all",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "Server Name",
+            "description": "The name for the server",
+            "env_variable": "SERVERNAME",
+            "default_value": "Powered by sneakyhub.com Bedrock",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Gamemode",
+            "description": "Allowed values: \"survival\", \"creative\", or \"adventure\"",
+            "env_variable": "GAMEMODE",
+            "default_value": "survival",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Difficulty",
+            "description": "Allowed values: \"peaceful\", \"easy\", \"normal\", or \"hard\"",
+            "env_variable": "DIFFICULTY",
+            "default_value": "easy",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Maximum Players",
+            "description": "Maximum players to join on the server",
+            "env_variable": "MAXPLAYERS",
+            "default_value": "10",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer",
+            "field_type": "text"
+        },
+        {
+            "name": "World Name",
+            "description": "World\/Level name to use for the server",
+            "env_variable": "WORLDNAME",
+            "default_value": "sneakyhub",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        }
+    ]
+}
