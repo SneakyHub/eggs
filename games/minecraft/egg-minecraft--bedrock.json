@@ -1,0 +1,94 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2025-02-04T16:41:33+00:00",
+    "name": "Minecraft - Bedrock NEW",
+    "author": "sneaky@sneakyhub.com",
+    "description": "Bedrock Edition (also known as the Bedrock Version, Bedrock Codebase, Bedrock Engine or just Bedrock) refers to the multi-platform family of editions of Minecraft developed by Mojang AB, Microsoft Studios, 4J Studios, and SkyBox Labs. Prior to this term, as the engine originated with Pocket Edition, this entire product family was referred to as \"Pocket Edition\", \"MCPE\", or \"Pocket\/Windows 10 Edition\".",
+    "features": [
+        "pid_limit"
+    ],
+    "docker_images": {
+        "ghcr.io\/sneakyhub\/yolks:debian": "ghcr.io\/sneakyhub\/yolks:debian"
+    },
+    "file_denylist": [],
+    "startup": ".\/bedrock_server",
+    "config": {
+        "files": "{\r\n    \"server.properties\": {\r\n        \"parser\": \"properties\",\r\n        \"find\": {\r\n            \"server-port\": \"{{server.build.default.port}}\",\r\n            \"server-name\": \"{{server.build.env.SERVERNAME}}\",\r\n            \"gamemode\": \"{{server.build.env.GAMEMODE}}\",\r\n            \"difficulty\": \"{{server.build.env.DIFFICULTY}}\",\r\n            \"allow-cheats\": \"{{server.build.env.CHEATS}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Server started\"\r\n}",
+        "logs": "{}",
+        "stop": "stop"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\nset -e  # Exit on error\r\n\r\necho \"Updating system and installing required packages...\"\r\napt update\r\napt install -y zip unzip wget curl\r\n\r\necho \"Ensuring the server directory exists...\"\r\nmkdir -p \/mnt\/server\r\ncd \/mnt\/server || exit 1\r\n\r\n# Define the primary and fallback download URLs\r\nPRIMARY_URL=\"https:\/\/mirror.sneakyhub.com\/files\/minecraft\/bedrock\/bedrock-server-1.21.51.02.zip\"\r\nFALLBACK_URL=\"https:\/\/github.com\/SneakyHub\/eggs\/raw\/refs\/heads\/main\/files\/minecraft\/bedrock\/bedrock-server-1.21.51.02.zip\"\r\nDOWNLOAD_FILE=\"bedrock-server-1.21.51.02.zip\"\r\n\r\n# Try downloading from the primary URL\r\necho \"Attempting to download Bedrock server from: $PRIMARY_URL\"\r\nif ! curl -L --fail -o \"$DOWNLOAD_FILE\" \"$PRIMARY_URL\"; then\r\n    echo \"Primary download failed. Trying fallback URL...\"\r\n    if ! curl -L --fail -o \"$DOWNLOAD_FILE\" \"$FALLBACK_URL\"; then\r\n        echo \"ERROR: Both download sources failed. Exiting...\"\r\n        exit 1\r\n    fi\r\nfi\r\n\r\necho \"Extracting Bedrock server files...\"\r\nunzip -o \"$DOWNLOAD_FILE\"\r\n\r\n# Verify extraction\r\nif [ ! -f \"bedrock_server\" ]; then\r\n    echo \"ERROR: bedrock_server file is missing after extraction. Exiting...\"\r\n    exit 1\r\nfi\r\n\r\necho \"Cleaning up...\"\r\nrm -f \"$DOWNLOAD_FILE\"\r\n\r\necho \"Setting executable permissions...\"\r\nchmod +x bedrock_server\r\n\r\necho \"\u2705 Installation completed successfully!\"\r\nexit 0",
+            "container": "ghcr.io\/sneakyhub\/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Server Name",
+            "description": "The name for the server",
+            "env_variable": "SERVERNAME",
+            "default_value": "Bedrock Dedicated Server",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:50",
+            "field_type": "text"
+        },
+        {
+            "name": "Gamemode",
+            "description": "Allowed values: \"survival\", \"creative\", or \"adventure\"",
+            "env_variable": "GAMEMODE",
+            "default_value": "survival",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:survival,creative,adventure",
+            "field_type": "text"
+        },
+        {
+            "name": "Difficulty",
+            "description": "Allowed values: \"peaceful\", \"easy\", \"normal\", or \"hard\"",
+            "env_variable": "DIFFICULTY",
+            "default_value": "easy",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:peaceful,easy,normal,hard",
+            "field_type": "text"
+        },
+        {
+            "name": "Bedrock Version",
+            "description": "The version of bedrock. (Ex. 1.7.0.13)\r\n\r\nDefault version is latest.",
+            "env_variable": "BEDROCK_VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "ld lib path",
+            "description": "Dumb reasons to need this",
+            "env_variable": "LD_LIBRARY_PATH",
+            "default_value": ".",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "Allow cheats",
+            "description": "If true then cheats like commands can be used.\r\n\r\nAllowed values: \"true\" or \"false\"",
+            "env_variable": "CHEATS",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|in:true,false",
+            "field_type": "text"
+        }
+    ]
+}
